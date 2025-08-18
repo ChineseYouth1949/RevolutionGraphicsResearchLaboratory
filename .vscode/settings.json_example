@@ -1,0 +1,6 @@
+{
+  "cmake.sourceDirectory": "${workspaceFolder}/LearnDirectX12Samples",
+  "editor.formatOnSave": true,
+  "C_Cpp.errorSquiggles": "disabled",
+  // "clang-format.executable": "C:/Users/xxx/.vscode/extensions/ms-vscode.cpptools-xxx/LLVM/bin/clang-format.exe", 
+}

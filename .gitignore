@@ -1,4 +1,6 @@
-build/*
-external/*
+**/settings.json
 
-CMakePresets.json
+**/build/*
+**/external/*
+
+**/CMakePresets.json
