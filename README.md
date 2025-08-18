@@ -1,2 +1,2 @@
-# -Revolutionary-Graphics-Research-Laboratory
-研究如何重现真实的、伟大的革命历史。
+# Revolutionary Graphics Research Laboratory
+Research on how to restore the true and great revolutionary history.
