@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(SampleBase LANGUAGES CXX)
+project(DXSampleBase LANGUAGES CXX)
 
 file(GLOB_RECURSE LIB_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 file(GLOB_RECURSE LIB_HDRS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")

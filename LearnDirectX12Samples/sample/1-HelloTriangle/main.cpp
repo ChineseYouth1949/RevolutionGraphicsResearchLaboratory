@@ -1,4 +1,4 @@
-#include "sampleBase.h"
+#include "DXSample.h"
 
 int main() {
   return 0;

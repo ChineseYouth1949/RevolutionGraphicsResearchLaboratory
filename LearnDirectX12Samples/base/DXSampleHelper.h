@@ -62,7 +62,7 @@ std::wstring GetAppParentRelativePath(const std::wstring& relaPath) {
   return GetAppParentPath() + relaPath;
 }
 
-std::wstring GetMyAssetsPatyh() {
+std::wstring GetMyAssetsPath() {
   return GetAppParentRelativePath(L"Assets\\");
 }
 
