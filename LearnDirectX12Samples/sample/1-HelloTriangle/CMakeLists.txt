@@ -1,5 +1,5 @@
-project(1-HelloTriangle VERSION 1.0)
+project(1-HelloTriangle)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC SampleBase)
+target_link_libraries(${PROJECT_NAME} PRIVATE SampleBase)
