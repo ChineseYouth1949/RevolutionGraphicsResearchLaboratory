@@ -203,7 +203,7 @@ void HelloTriangle::PopulateCommandList() {
                                                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-  m_commandList->OMSetRenderTargets(0, &rtvHandle, FALSE, nullptr);
+  m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
   const float clearColor[] = {0.0, 0.2f, 0.4f, 1.0f};
   m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
