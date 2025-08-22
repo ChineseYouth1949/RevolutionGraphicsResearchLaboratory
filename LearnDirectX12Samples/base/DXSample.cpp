@@ -5,8 +5,7 @@
 using namespace Microsoft::WRL;
 
 DXSample::DXSample(UINT width, UINT height, std::wstring name) : m_width(width), m_height(height), m_title(name), m_useWarpDevice(false) {
-  m_assetsPath = GetMyAssetsPath();
-
+  m_assetsPath = GetAppPath();
   m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 }
 
@@ -17,7 +16,7 @@ std::wstring DXSample::GetAssetFullPath(std::wstring assetName) {
 }
 void DXSample::SetCustomWindowText(std::wstring text) {
   std::wstring windowText = m_title + L": " + text;
-  SetWindowText(Win32Allication::GetHwnd(), windowText.c_str());
+  SetWindowText(Win32Application::GetHwnd(), windowText.c_str());
 }
 void DXSample::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter) {
   *ppAdapter = nullptr;

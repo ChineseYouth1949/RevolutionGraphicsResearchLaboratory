@@ -38,7 +38,7 @@ inline void ThrowIfFailed(HRESULT hr) {
 
 const unsigned long PATH_MAX_LENGTH = 1000;
 
-std::wstring GetAppPath() {
+inline std::wstring GetAppPath() {
   wchar_t modulePath[PATH_MAX_LENGTH] = {0};
   auto size = GetModuleFileNameW(nullptr, modulePath, PATH_MAX_LENGTH);
 
@@ -52,18 +52,14 @@ std::wstring GetAppPath() {
   return appPathStr;
 }
 
-std::wstring GetAppParentPath() {
+inline std::wstring GetAppParentPath() {
   std::filesystem::path appPath(GetAppPath());
   std::wstring appParentPathStr = appPath.parent_path().wstring() + L'\\';
   return appParentPathStr;
 }
 
-std::wstring GetAppParentRelativePath(const std::wstring& relaPath) {
+inline std::wstring GetAppParentRelativePath(const std::wstring& relaPath) {
   return GetAppParentPath() + relaPath;
-}
-
-std::wstring GetMyAssetsPath() {
-  return GetAppParentRelativePath(L"Assets\\");
 }
 
 inline std::vector<uint8_t> ReadDataFromFile(const std::wstring& fileName) {

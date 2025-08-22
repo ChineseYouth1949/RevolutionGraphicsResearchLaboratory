@@ -1,5 +1,6 @@
-#include "DXSample.h"
+#include "HelloTriangle.h"
 
-int main() {
-  return 0;
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+  HelloTriangle sample(1280, 720, L"DXSample");
+  return Win32Application::Run(&sample, hInstance, nCmdShow);
 }

@@ -16,12 +16,11 @@ class DXSample {
   virtual void OnKeyDown(UINT8) {}
   virtual void OnKeyUp(UINT8) {}
 
+  virtual void ParseCommandLineArgs(WCHAR* argv[], int argc);
+
   UINT GetWidth() const { return m_width; };
   UINT GetHeight() const { return m_height; };
-
   std::wstring GetTitle() const { return m_title; }
-
-  void ParseCommandLineArgs(WCHAR* argv[], int argc);
 
  protected:
   std::wstring GetAssetFullPath(std::wstring assetName);

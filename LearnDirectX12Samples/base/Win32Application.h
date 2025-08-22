@@ -4,7 +4,7 @@
 
 class DXSample;
 
-class Win32Allication {
+class Win32Application {
  public:
   static int Run(DXSample* pSample, HINSTANCE hInstance, int nCmdShow);
   static HWND GetHwnd() { return m_hwnd; }
