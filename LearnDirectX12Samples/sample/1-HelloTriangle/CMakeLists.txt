@@ -1,15 +1,29 @@
 project(1-HelloTriangle)
 
-add_executable(${PROJECT_NAME} main.cpp helloTriangle.cpp)
+set(SampleAppName ${PROJECT_NAME}App)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
+add_executable(${SampleAppName} main.cpp HelloTriangle.cpp)
 
-target_link_libraries(${PROJECT_NAME}
+set_target_properties(${SampleAppName} PROPERTIES WIN32_EXECUTABLE TRUE)
+
+target_link_libraries(${SampleAppName}
     PRIVATE DXSampleBase   
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+add_custom_command(TARGET ${SampleAppName} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${CMAKE_CURRENT_SOURCE_DIR}/shaders.hlsl
-    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    $<TARGET_FILE_DIR:${SampleAppName}>
+)
+
+
+set(SampleLibName ${PROJECT_NAME}Lib)
+
+add_library(${SampleLibName} STATIC 
+    HelloTriangle.h 
+    HelloTriangle.cpp)
+
+target_link_libraries(${SampleLibName} PUBLIC SampleBase)
+target_include_directories(${SampleLibName} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/HelloTriangle.cpp
 )
