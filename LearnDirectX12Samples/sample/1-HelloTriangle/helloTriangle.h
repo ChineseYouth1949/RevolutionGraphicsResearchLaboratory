@@ -8,10 +8,10 @@ class HelloTriangle : public DXSample {
  public:
   HelloTriangle(UINT width, UINT height, std::wstring name);
 
-  virtual void OnInit();
-  virtual void OnUpdate();
-  virtual void OnRender();
-  virtual void OnDestroy();
+  void OnInit() override;
+  void OnUpdate() override;
+  void OnRender() override;
+  void OnDestroy() override;
 
  protected:
   static const UINT FrameCount = 2;
