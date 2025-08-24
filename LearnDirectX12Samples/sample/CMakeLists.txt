@@ -1,1 +1,2 @@
 add_subdirectory(1-HelloTriangle)
+add_subdirectory(2-HelloConstBuffers)

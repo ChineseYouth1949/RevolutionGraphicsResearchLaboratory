@@ -1,6 +1,6 @@
-project(1-HelloTriangle)
+project(2-HelloConstBuffers)
 
-add_executable(${PROJECT_NAME} main.cpp helloTriangle.cpp)
+add_executable(${PROJECT_NAME} main.cpp HelloConstBuffers.cpp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 
