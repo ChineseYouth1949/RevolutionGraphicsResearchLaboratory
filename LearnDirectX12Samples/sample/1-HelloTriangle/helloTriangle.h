@@ -42,8 +42,8 @@ class HelloTriangle : public DXSample {
   ComPtr<ID3D12Fence> m_fence;
   UINT64 m_fenceValue;
 
+  virtual void LoadCoreInterface();
   virtual void LoadPipeline();
-  virtual void LoadAssets();
   virtual void PopulateCommandList();
   virtual void WaitForPreviousFrame();
 };

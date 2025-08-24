@@ -21,7 +21,6 @@ class HelloConstBuffers : public HelloTriangle {
   SceneConstantBuffer m_constaneBufferData;
   UINT8* m_pCbvDataBegin;
 
-  virtual void LoadPipeline() override;
-  virtual void LoadAssets() override;
-  virtual void PopulateCommandList() override;
+  void LoadPipeline() override;
+  void PopulateCommandList() override;
 };

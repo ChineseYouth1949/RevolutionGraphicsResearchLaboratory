@@ -4,6 +4,4 @@ HelloConstBuffers::HelloConstBuffers(UINT width, UINT height, std::wstring name)
 
 void HelloConstBuffers::LoadPipeline() {}
 
-void HelloConstBuffers::LoadAssets() {}
-
 void HelloConstBuffers::PopulateCommandList() {}

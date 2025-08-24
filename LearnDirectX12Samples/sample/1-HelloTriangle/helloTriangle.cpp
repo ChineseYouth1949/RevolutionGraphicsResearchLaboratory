@@ -8,11 +8,11 @@ HelloTriangle::HelloTriangle(UINT width, UINT height, std::wstring name)
       m_rtvDescriptorSize(0) {}
 
 void HelloTriangle::OnInit() {
+  LoadCoreInterface();
   LoadPipeline();
-  LoadAssets();
 }
 
-void HelloTriangle::LoadPipeline() {
+void HelloTriangle::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
 #if defined(_DEBUG)
@@ -85,7 +85,7 @@ void HelloTriangle::LoadPipeline() {
   ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 }
 
-void HelloTriangle::LoadAssets() {
+void HelloTriangle::LoadPipeline() {
   {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
