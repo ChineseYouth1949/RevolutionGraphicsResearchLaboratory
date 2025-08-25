@@ -218,6 +218,7 @@ void HelloTriangle::PopulateCommandList() {
 
   ThrowIfFailed(m_commandList->Close());
 }
+
 void HelloTriangle::WaitForPreviousFrame() {
   const UINT fence = m_fenceValue;
   ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));

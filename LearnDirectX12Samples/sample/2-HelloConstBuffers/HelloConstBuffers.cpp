@@ -2,18 +2,26 @@
 
 HelloConstBuffers::HelloConstBuffers(UINT width, UINT height, std::wstring name) : HelloTriangle(width, height, name) {}
 
-// void HelloConstBuffers::LoadPipeline() {
-//   //   {
-//   //     D3D12_FEATURE_ROOT_SIGNATURE featureData = {};
+void HelloConstBuffers::LoadCoreInterface() {
+  HelloTriangle::LoadCoreInterface();
+}
 
-//   //     featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+void HelloConstBuffers::WaitForPreviousFrame() {
+  HelloTriangle::WaitForPreviousFrame();
+}
 
-//   //     if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE))) {
-//   //       featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-//   //     }
+void HelloConstBuffers::LoadPipeline() {
+  CreateRootSignature();
 
-//   //     CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-//   //   }
-// }
+  HelloTriangle::CreatePSO();
+  HelloTriangle::CreateVertexBuffer();
 
-// void HelloConstBuffers::PopulateCommandList() {}
+  CreateUniformBuffer();
+
+  WaitForPreviousFrame();
+}
+
+void HelloConstBuffers::CreateRootSignature() {}
+void HelloConstBuffers::CreateUniformBuffer() {}
+
+void HelloConstBuffers::PopulateCommandList() {}

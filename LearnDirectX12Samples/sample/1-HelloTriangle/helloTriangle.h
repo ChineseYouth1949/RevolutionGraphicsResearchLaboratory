@@ -8,10 +8,10 @@ class HelloTriangle : public DXSample {
  public:
   HelloTriangle(UINT width, UINT height, std::wstring name);
 
-  void OnInit() override;
-  void OnUpdate() override;
-  void OnRender() override;
-  void OnDestroy() override;
+  void OnInit() override final;
+  void OnUpdate() override final;
+  void OnRender() override final;
+  void OnDestroy() override final;
 
  protected:
   static const UINT FrameCount = 2;
@@ -42,11 +42,11 @@ class HelloTriangle : public DXSample {
   ComPtr<ID3D12Fence> m_fence;
   UINT64 m_fenceValue;
 
-  void LoadCoreInterface();
-  void LoadPipeline();
+  virtual void LoadCoreInterface();
+  virtual void LoadPipeline();
 
-  void PopulateCommandList();
-  void WaitForPreviousFrame();
+  virtual void PopulateCommandList();
+  virtual void WaitForPreviousFrame();
 
   void CreateRootSignature();
   void CreatePSO();

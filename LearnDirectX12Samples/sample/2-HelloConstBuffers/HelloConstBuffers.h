@@ -20,4 +20,13 @@ class HelloConstBuffers : public HelloTriangle {
   ComPtr<ID3D12Resource> m_constantBuffer;
   SceneConstantBuffer m_constaneBufferData;
   UINT8* m_pCbvDataBegin;
+
+  void LoadCoreInterface() override;
+  void LoadPipeline() override;
+
+  void PopulateCommandList() override;
+  void WaitForPreviousFrame() override;
+
+  void CreateRootSignature();
+  void CreateUniformBuffer();
 };
