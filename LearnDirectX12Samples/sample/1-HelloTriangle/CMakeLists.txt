@@ -1,7 +1,10 @@
-project(1-HelloTriangle)
+cmake_minimum_required(VERSION 3.19)
+
+project(1-HelloTriangle LANGUAGES CXX)
 
 add_executable(${PROJECT_NAME} main.cpp HelloTriangle.cpp)
 
+set_target_output_path(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 
 target_link_libraries(${PROJECT_NAME}
@@ -18,6 +21,8 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 add_library(${PROJECT_NAME}Lib STATIC 
     HelloTriangle.h 
     HelloTriangle.cpp)
+
+set_target_output_path(${PROJECT_NAME}Lib)
 
 target_link_libraries(${PROJECT_NAME}Lib PUBLIC DXSampleBase)
 target_include_directories(${PROJECT_NAME}Lib PUBLIC

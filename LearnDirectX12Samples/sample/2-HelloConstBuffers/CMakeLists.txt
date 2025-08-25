@@ -2,6 +2,7 @@ project(2-HelloConstBuffers)
 
 add_executable(${PROJECT_NAME} main.cpp HelloConstBuffers.cpp)
 
+set_target_output_path(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 
 target_link_libraries(${PROJECT_NAME}
