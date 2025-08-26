@@ -4,9 +4,9 @@
 
 using namespace DirectX;
 
-class HelloTriangle : public DXSample {
+class HelloTexture : public DXSample {
  public:
-  HelloTriangle(UINT width, UINT height, std::wstring name);
+  HelloTexture(UINT width, UINT height, std::wstring name);
 
   void OnInit() override;
   void OnUpdate() override;
