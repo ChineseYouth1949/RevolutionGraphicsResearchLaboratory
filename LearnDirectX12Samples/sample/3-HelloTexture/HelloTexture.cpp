@@ -1,32 +1,19 @@
-#include "HelloConstBuffers.h"
+#include "HelloTexture.h"
 
-HelloConstBuffers::HelloConstBuffers(UINT width, UINT height, std::wstring name)
+HelloTexture::HelloTexture(UINT width, UINT height, std::wstring name)
     : DXSample(width, height, name),
       m_frameIndex(0),
       m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
       m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
-      m_rtvDescriptorSize(0),
-      m_pCbvDataBegin(nullptr),
-      m_constantBufferData{} {}
+      m_rtvDescriptorSize(0) {}
 
-void HelloConstBuffers::OnInit() {
+void HelloTexture::OnInit() {
   LoadCoreInterface();
   LoadPipeline();
 }
 
-void HelloConstBuffers::OnUpdate() {
-  const float translationSpeed = 0.005f;
-  const float offsetBounds = 1.25f;
-
-  m_constantBufferData.offset.x += translationSpeed;
-  if (m_constantBufferData.offset.x > offsetBounds) {
-    m_constantBufferData.offset.x = -offsetBounds;
-  }
-
-  memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-}
-
-void HelloConstBuffers::OnRender() {
+void HelloTexture::OnUpdate() {}
+void HelloTexture::OnRender() {
   PopulateCommandList();
 
   ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
@@ -37,12 +24,12 @@ void HelloConstBuffers::OnRender() {
   WaitForPreviousFrame();
 }
 
-void HelloConstBuffers::OnDestroy() {
+void HelloTexture::OnDestroy() {
   WaitForPreviousFrame();
   CloseHandle(m_fenceEvent);
 }
 
-void HelloConstBuffers::LoadCoreInterface() {
+void HelloTexture::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
 #if defined(_DEBUG)
@@ -130,16 +117,26 @@ void HelloConstBuffers::LoadCoreInterface() {
   }
 }
 
-void HelloConstBuffers::LoadPipeline() {
+void HelloTexture::LoadPipeline() {
+  CrtateSrvDescripHeap();
+
   CreateRootSignature();
   CreatePSO();
   CreateVertexBuffer();
-  CreateConstantBuffer();
+  CreateTexture();
 
   WaitForPreviousFrame();
 }
 
-void HelloConstBuffers::CreateRootSignature() {
+void HelloTexture::CrtateSrvDescripHeap() {
+  D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+  srvHeapDesc.NumDescriptors = 1;
+  srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+  srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+  ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
+}
+
+void HelloTexture::CreateRootSignature() {
   D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
   featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -149,18 +146,28 @@ void HelloConstBuffers::CreateRootSignature() {
   }
 
   CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+  ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
   CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+  rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
-  ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-  rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
-
-  D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-      D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS | D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-      D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+  D3D12_STATIC_SAMPLER_DESC sampler = {};
+  sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+  sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+  sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+  sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+  sampler.MipLODBias = 0;
+  sampler.MaxAnisotropy = 0;
+  sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+  sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+  sampler.MinLOD = 0.0f;
+  sampler.MaxLOD = D3D12_FLOAT32_MAX;
+  sampler.ShaderRegister = 0;
+  sampler.RegisterSpace = 0;
+  sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
   CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-  rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
+  rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
   ComPtr<ID3DBlob> signature;
   ComPtr<ID3DBlob> error;
@@ -168,7 +175,7 @@ void HelloConstBuffers::CreateRootSignature() {
   ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 }
 
-void HelloConstBuffers::CreatePSO() {
+void HelloTexture::CreatePSO() {
   ComPtr<ID3DBlob> vertexShader;
   ComPtr<ID3DBlob> pixelShader;
 
@@ -185,7 +192,7 @@ void HelloConstBuffers::CreatePSO() {
   ThrowIfFailed(D3DCompileFromFile(pixelShaderPath.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
   D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                                                  {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
+                                                  {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
   D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
   psoDesc.InputLayout = {inputElementDescs, _countof(inputElementDescs)};
@@ -204,10 +211,10 @@ void HelloConstBuffers::CreatePSO() {
   ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
-void HelloConstBuffers::CreateVertexBuffer() {
-  Vertex triangleVertices[] = {{{0.0f, 0.25f * m_aspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-                               {{0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-                               {{-0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}};
+void HelloTexture::CreateVertexBuffer() {
+  Vertex triangleVertices[] = {{{0.0f, 0.25f * m_aspectRatio, 0.0f}, {0.5f, 0.0f}},
+                               {{0.25f, -0.25f * m_aspectRatio, 0.0f}, {1.0f, 1.0f}},
+                               {{-0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 1.0f}}};
 
   const UINT vertexBufferSize = sizeof(triangleVertices);
 
@@ -226,40 +233,101 @@ void HelloConstBuffers::CreateVertexBuffer() {
   m_vertexBufferView.SizeInBytes = vertexBufferSize;
 }
 
-void HelloConstBuffers::CreateConstantBuffer() {
-  D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
-  cbvHeapDesc.NumDescriptors = 1;
-  cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-  cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-  ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+void HelloTexture::CreateTexture() {
+  ComPtr<ID3D12Resource> textureUploadHeap;
 
-  const UINT constantBufferSize = sizeof(SceneConstantBuffer);
+  {
+    D3D12_RESOURCE_DESC textureDesc = {};
+    textureDesc.MipLevels = 1;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.Width = TextureWidth;
+    textureDesc.Height = TextureHeight;
+    textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    textureDesc.DepthOrArraySize = 1;
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.SampleDesc.Quality = 0;
+    textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
-  ThrowIfFailed(m_device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-                                                  &CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-                                                  IID_PPV_ARGS(&m_constantBuffer)));
+    ThrowIfFailed(m_device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &textureDesc,
+                                                    D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_texture)));
 
-  D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-  cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
-  cbvDesc.SizeInBytes = constantBufferSize;
-  m_device->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_texture.Get(), 0, 1);
 
-  CD3DX12_RANGE readRange(0, 0);
-  ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
-  memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+    ThrowIfFailed(m_device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+                                                    &CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+                                                    IID_PPV_ARGS(&textureUploadHeap)));
+
+    std::vector<UINT8> texture = GenerateTextureData();
+
+    D3D12_SUBRESOURCE_DATA textureData = {};
+    textureData.pData = &texture[0];
+    textureData.RowPitch = TextureWidth * TexturePixelSize;
+    textureData.SlicePitch = textureData.RowPitch * TextureHeight;
+
+    m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+
+    UpdateSubresources(m_commandList.Get(), m_texture.Get(), textureUploadHeap.Get(), 0, 0, 1, &textureData);
+    m_commandList->ResourceBarrier(
+        1, &CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+    // Describe and create a SRV for the texture.
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = textureDesc.Format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = 1;
+    m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    ThrowIfFailed(m_commandList->Close());
+    ID3D12CommandList* ppCommandLists[] = {m_commandList.Get()};
+    m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+    WaitForPreviousFrame();
+  }
 }
 
-void HelloConstBuffers::PopulateCommandList() {
+std::vector<UINT8> HelloTexture::GenerateTextureData() {
+  const UINT rowPitch = TextureWidth * TexturePixelSize;
+  const UINT cellPitch = rowPitch >> 3;       // The width of a cell in the checkboard texture.
+  const UINT cellHeight = TextureWidth >> 3;  // The height of a cell in the checkerboard texture.
+  const UINT textureSize = rowPitch * TextureHeight;
+
+  std::vector<UINT8> data(textureSize);
+  UINT8* pData = &data[0];
+
+  for (UINT n = 0; n < textureSize; n += TexturePixelSize) {
+    UINT x = n % rowPitch;
+    UINT y = n / rowPitch;
+    UINT i = x / cellPitch;
+    UINT j = y / cellHeight;
+
+    if (i % 2 == j % 2) {
+      pData[n] = 0x00;      // R
+      pData[n + 1] = 0x00;  // G
+      pData[n + 2] = 0x00;  // B
+      pData[n + 3] = 0xff;  // A
+    } else {
+      pData[n] = 0xff;      // R
+      pData[n + 1] = 0xff;  // G
+      pData[n + 2] = 0xff;  // B
+      pData[n + 3] = 0xff;  // A
+    }
+  }
+
+  return data;
+}
+
+void HelloTexture::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator->Reset());
 
   ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
 
   m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-  ID3D12DescriptorHeap* ppHeaps[] = {m_cbvHeap.Get()};
+  ID3D12DescriptorHeap* ppHeaps[] = {m_srvHeap.Get()};
   m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-  m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+  m_commandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
   m_commandList->RSSetViewports(1, &m_viewport);
   m_commandList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -269,7 +337,7 @@ void HelloConstBuffers::PopulateCommandList() {
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
   m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
-  const float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
+  const float clearColor[] = {0.0, 0.2f, 0.4f, 1.0f};
   m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
   m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
@@ -281,7 +349,7 @@ void HelloConstBuffers::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void HelloConstBuffers::WaitForPreviousFrame() {
+void HelloTexture::WaitForPreviousFrame() {
   const UINT fence = m_fenceValue;
   ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
   m_fenceValue++;

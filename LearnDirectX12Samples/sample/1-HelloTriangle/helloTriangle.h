@@ -13,7 +13,7 @@ class HelloTriangle : public DXSample {
   void OnRender() override;
   void OnDestroy() override;
 
- protected:
+ private:
   static const UINT FrameCount = 2;
 
   struct Vertex {
@@ -42,11 +42,11 @@ class HelloTriangle : public DXSample {
   ComPtr<ID3D12Fence> m_fence;
   UINT64 m_fenceValue;
 
-  virtual void LoadCoreInterface();
-  virtual void LoadPipeline();
+  void LoadCoreInterface();
+  void LoadPipeline();
 
-  virtual void PopulateCommandList();
-  virtual void WaitForPreviousFrame();
+  void PopulateCommandList();
+  void WaitForPreviousFrame();
 
   void CreateRootSignature();
   void CreatePSO();

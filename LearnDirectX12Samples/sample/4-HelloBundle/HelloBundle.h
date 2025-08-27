@@ -4,9 +4,9 @@
 
 using namespace DirectX;
 
-class HelloConstBuffers : public DXSample {
+class HelloBundle : public DXSample {
  public:
-  HelloConstBuffers(UINT width, UINT height, std::wstring name);
+  HelloBundle(UINT width, UINT height, std::wstring name);
 
   void OnInit() override;
   void OnUpdate() override;
@@ -45,24 +45,16 @@ class HelloConstBuffers : public DXSample {
   void LoadCoreInterface();
   void WaitForPreviousFrame();
 
+  void CreateRootSignature();
   void CreatePSO();
   void CreateVertexBuffer();
 
   // Here are the core differences between this example and HelloTriangle.
-  struct SceneConstantBuffer {
-    XMFLOAT4 offset;
-    float padding[60];
-  };
-  static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
-
-  ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
-  ComPtr<ID3D12Resource> m_constantBuffer;
-  SceneConstantBuffer m_constantBufferData;
-  UINT8* m_pCbvDataBegin;
+  ComPtr<ID3D12CommandAllocator> m_bundleAllocator;
+  ComPtr<ID3D12GraphicsCommandList> m_bundleCommandList;
 
   void LoadPipeline();
-  void PopulateCommandList();
+  void createBundle();
 
-  void CreateRootSignature();
-  void CreateConstantBuffer();
+  void PopulateCommandList();
 };

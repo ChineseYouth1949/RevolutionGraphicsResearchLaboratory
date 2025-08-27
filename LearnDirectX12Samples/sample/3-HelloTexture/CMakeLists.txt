@@ -1,12 +1,12 @@
-project(3-HelloBundle)
+project(3-HelloTexture LANGUAGES CXX)
 
-add_executable(${PROJECT_NAME} main.cpp HelloBundle.cpp)
+add_executable(${PROJECT_NAME} main.cpp HelloTexture.cpp)
 
 set_target_output_path(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC 1-HelloTriangleLib  
+    PRIVATE DXSampleBase   
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

@@ -1,6 +1,6 @@
-#include "HelloTriangle.h"
+#include "HelloTexture.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
-  HelloTriangle sample(1280, 720, L"Hello Triangle");
+  HelloTexture sample(1280, 720, L"Hello Triangle");
   return Win32Application::Run(&sample, hInstance, nCmdShow);
 }

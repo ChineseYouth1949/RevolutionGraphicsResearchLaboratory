@@ -1,21 +1,19 @@
-#include "helloTriangle.h"
+#include "HelloBundle.h"
 
-HelloTriangle::HelloTriangle(UINT width, UINT height, std::wstring name)
+HelloBundle::HelloBundle(UINT width, UINT height, std::wstring name)
     : DXSample(width, height, name),
       m_frameIndex(0),
       m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
       m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
       m_rtvDescriptorSize(0) {}
 
-void HelloTriangle::OnInit() {
+void HelloBundle::OnInit() {
   LoadCoreInterface();
   LoadPipeline();
-
-  WaitForPreviousFrame();
 }
 
-void HelloTriangle::OnUpdate() {}
-void HelloTriangle::OnRender() {
+void HelloBundle::OnUpdate() {}
+void HelloBundle::OnRender() {
   PopulateCommandList();
 
   ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
@@ -26,12 +24,12 @@ void HelloTriangle::OnRender() {
   WaitForPreviousFrame();
 }
 
-void HelloTriangle::OnDestroy() {
+void HelloBundle::OnDestroy() {
   WaitForPreviousFrame();
   CloseHandle(m_fenceEvent);
 }
 
-void HelloTriangle::LoadCoreInterface() {
+void HelloBundle::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
 #if defined(_DEBUG)
@@ -119,13 +117,16 @@ void HelloTriangle::LoadCoreInterface() {
   }
 }
 
-void HelloTriangle::LoadPipeline() {
+void HelloBundle::LoadPipeline() {
   CreateRootSignature();
   CreatePSO();
   CreateVertexBuffer();
+  createBundle();
+
+  WaitForPreviousFrame();
 }
 
-void HelloTriangle::CreateRootSignature() {
+void HelloBundle::CreateRootSignature() {
   CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
   rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -135,7 +136,7 @@ void HelloTriangle::CreateRootSignature() {
   ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 }
 
-void HelloTriangle::CreatePSO() {
+void HelloBundle::CreatePSO() {
   ComPtr<ID3DBlob> vertexShader;
   ComPtr<ID3DBlob> pixelShader;
 
@@ -171,7 +172,7 @@ void HelloTriangle::CreatePSO() {
   ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
-void HelloTriangle::CreateVertexBuffer() {
+void HelloBundle::CreateVertexBuffer() {
   Vertex triangleVertices[] = {{{0.0f, 0.25f * m_aspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
                                {{0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
                                {{-0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}};
@@ -193,7 +194,19 @@ void HelloTriangle::CreateVertexBuffer() {
   m_vertexBufferView.SizeInBytes = vertexBufferSize;
 }
 
-void HelloTriangle::PopulateCommandList() {
+void HelloBundle::createBundle() {
+  ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_BUNDLE, IID_PPV_ARGS(&m_bundleAllocator)));
+
+  ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_BUNDLE, m_bundleAllocator.Get(), m_pipelineState.Get(),
+                                            IID_PPV_ARGS(&m_bundleCommandList)));
+  m_bundleCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
+  m_bundleCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  m_bundleCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+  m_bundleCommandList->DrawInstanced(3, 1, 0, 0);
+  ThrowIfFailed(m_bundleCommandList->Close());
+}
+
+void HelloBundle::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator->Reset());
 
   ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
@@ -210,9 +223,8 @@ void HelloTriangle::PopulateCommandList() {
 
   const float clearColor[] = {0.0, 0.2f, 0.4f, 1.0f};
   m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-  m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-  m_commandList->DrawInstanced(3, 1, 0, 0);
+
+  m_commandList->ExecuteBundle(m_bundleCommandList.Get());
 
   m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                                           D3D12_RESOURCE_STATE_PRESENT));
@@ -220,7 +232,7 @@ void HelloTriangle::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void HelloTriangle::WaitForPreviousFrame() {
+void HelloBundle::WaitForPreviousFrame() {
   const UINT fence = m_fenceValue;
   ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
   m_fenceValue++;

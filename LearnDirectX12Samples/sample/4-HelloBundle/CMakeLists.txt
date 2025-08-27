@@ -1,12 +1,12 @@
-project(2-HelloConstBuffers)
+project(4-HelloBundle)
 
-add_executable(${PROJECT_NAME} main.cpp HelloConstBuffers.cpp)
+add_executable(${PROJECT_NAME} main.cpp HelloBundle.cpp)
 
 set_target_output_path(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE DXSampleBase  
+    PRIVATE DXSampleBase
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

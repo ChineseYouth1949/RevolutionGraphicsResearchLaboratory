@@ -10,8 +10,6 @@ HelloTriangle::HelloTriangle(UINT width, UINT height, std::wstring name)
 void HelloTriangle::OnInit() {
   LoadCoreInterface();
   LoadPipeline();
-
-  WaitForPreviousFrame();
 }
 
 void HelloTriangle::OnUpdate() {}
@@ -123,6 +121,8 @@ void HelloTriangle::LoadPipeline() {
   CreateRootSignature();
   CreatePSO();
   CreateVertexBuffer();
+
+  WaitForPreviousFrame();
 }
 
 void HelloTriangle::CreateRootSignature() {

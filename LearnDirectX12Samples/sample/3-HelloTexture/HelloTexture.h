@@ -13,12 +13,15 @@ class HelloTexture : public DXSample {
   void OnRender() override;
   void OnDestroy() override;
 
- protected:
+ private:
   static const UINT FrameCount = 2;
+  static const UINT TextureWidth = 256;
+  static const UINT TextureHeight = 256;
+  static const UINT TexturePixelSize = 4;
 
   struct Vertex {
     XMFLOAT3 position;
-    XMFLOAT4 color;
+    XMFLOAT2 uv;
   };
 
   CD3DX12_VIEWPORT m_viewport;
@@ -42,13 +45,21 @@ class HelloTexture : public DXSample {
   ComPtr<ID3D12Fence> m_fence;
   UINT64 m_fenceValue;
 
-  virtual void LoadCoreInterface();
-  virtual void LoadPipeline();
+  void LoadCoreInterface();
+  void WaitForPreviousFrame();
 
-  virtual void PopulateCommandList();
-  virtual void WaitForPreviousFrame();
-
-  void CreateRootSignature();
   void CreatePSO();
+
+  // Here are the core differences between this example and HelloTriangle.
+  ComPtr<ID3D12DescriptorHeap> m_srvHeap;
+  ComPtr<ID3D12Resource> m_texture;
+
+  void LoadPipeline();
+  void PopulateCommandList();
+
+  void CrtateSrvDescripHeap();
+  void CreateRootSignature();
   void CreateVertexBuffer();
+  void CreateTexture();
+  std::vector<UINT8> GenerateTextureData();
 };
