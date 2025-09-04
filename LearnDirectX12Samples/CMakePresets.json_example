@@ -5,12 +5,12 @@
             "name": "windows-base",
             "hidden": true,
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}/GenerateCacheFile",
+            "binaryDir": "${sourceDir}/Build/${presetName}/GenerateCacheFile",
             "installDir": "${sourceDir}/install/${presetName}",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe",
-                "RUNTIME_ARCHIVE_LIBRARY_BASE_DIRECTORY": "${sourceDir}/build/${presetName}"
+                "RUNTIME_ARCHIVE_LIBRARY_BASE_DIRECTORY": "${sourceDir}/Build/${presetName}"
             },
             "condition": {
                 "type": "equals",

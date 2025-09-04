@@ -1,0 +1,2 @@
+add_subdirectory(1-SyncSwapChainAndWindow)
+# add_subdirectory(2-SupportResolutionOptions)

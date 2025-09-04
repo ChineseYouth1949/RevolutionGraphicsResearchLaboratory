@@ -1,7 +1,6 @@
 .vscode/*
 !.vsocde/settings.json_example
 
-**/build/*
-**/external/*
+**/Build/*
 
 **/CMakePresets.json
