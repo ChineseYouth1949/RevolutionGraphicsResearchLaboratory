@@ -1,6 +1,6 @@
-project(SyncSwapChainAndWindow LANGUAGES CXX)
+project(SyncWindowAndBuffer LANGUAGES CXX)
 
-add_executable(${PROJECT_NAME} main.cpp SyncSwapChainAndWindow.cpp)
+add_executable(${PROJECT_NAME} main.cpp SyncWindowAndBuffer.cpp)
 
 set_target_output_path(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)

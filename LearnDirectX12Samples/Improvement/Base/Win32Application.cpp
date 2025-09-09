@@ -4,42 +4,83 @@
 
 HWND Win32Application::m_hwnd = nullptr;
 
+RECT Win32Application::m_windowRect;
+WindowMode Win32Application::m_windowMode = WindowMode::Normal;
+
 int Win32Application::Run(DXSample* pSample, HINSTANCE hInstance, int nCmdShow) {
-  int argc;
-  LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-  pSample->ParseCommandLineArgs(argv, argc);
-  LocalFree(argv);
+  try {
+    int argc;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    pSample->ParseCommandLineArgs(argv, argc);
+    LocalFree(argv);
 
-  WNDCLASSEX windowClass = {0};
-  windowClass.cbSize = sizeof(WNDCLASSEX);
-  windowClass.style = CS_HREDRAW | CS_VREDRAW;
-  windowClass.lpfnWndProc = WindowProc;
-  windowClass.hInstance = hInstance;
-  windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-  windowClass.lpszClassName = L"DXSampleClass";
-  RegisterClassEx(&windowClass);
+    WNDCLASSEX windowClass = {0};
+    windowClass.cbSize = sizeof(WNDCLASSEX);
+    windowClass.style = CS_HREDRAW | CS_VREDRAW;
+    windowClass.lpfnWndProc = WindowProc;
+    windowClass.hInstance = hInstance;
+    windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    windowClass.lpszClassName = L"DXSampleClass";
+    RegisterClassEx(&windowClass);
 
-  RECT windowRect = {0, 0, static_cast<LONG>(pSample->GetWidth()), static_cast<LONG>(pSample->GetHeight())};
-  AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+    RECT windowRect = {0, 0, static_cast<LONG>(pSample->GetWidth()), static_cast<LONG>(pSample->GetHeight())};
+    AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
-  m_hwnd = CreateWindow(windowClass.lpszClassName, pSample->GetTitle().c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                        windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, nullptr, nullptr, hInstance, pSample);
+    m_hwnd = CreateWindow(windowClass.lpszClassName, pSample->GetTitle().c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                          windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, nullptr, nullptr, hInstance, pSample);
 
-  pSample->OnInit();
+    pSample->OnInit();
 
-  ShowWindow(m_hwnd, nCmdShow);
+    ShowWindow(m_hwnd, nCmdShow);
 
-  MSG msg = {};
-  while (msg.message != WM_QUIT) {
-    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
+    MSG msg = {};
+    while (msg.message != WM_QUIT) {
+      if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+      }
     }
+
+    pSample->OnDestroy();
+
+    return static_cast<char>(msg.wParam);
+  } catch (std::exception& e) {
+    OutputDebugString(L"Application hit a problem: ");
+    OutputDebugStringA(e.what());
+    OutputDebugString(L"\nTerminating.\n");
+
+    pSample->OnDestroy();
+    return EXIT_FAILURE;
   }
+}
 
-  pSample->OnDestroy();
+void Win32Application::SetWindowMode(WindowMode windowMode) {
+  if (m_windowMode != windowMode) {
+    if (m_windowMode == WindowMode::FullScreen) {}
 
-  return static_cast<char>(msg.wParam);
+    if (windowMode == WindowMode::FullScreen) {
+      GetWindowRect(m_hwnd, &m_windowRect);
+
+      SetWindowLong(m_hwnd, GWL_STYLE, m_windowStyle & ~(WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU | WS_THICKFRAME));
+
+    } else if (windowMode == WindowMode::Borderless) {
+      SetWindowLong(m_hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+
+      SetWindowPos(m_hwnd, HWND_NOTOPMOST, m_windowRect.left, m_windowRect.top, m_windowRect.right - m_windowRect.left,
+                   m_windowRect.bottom - m_windowRect.top, SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+      ShowWindow(m_hwnd, SW_NORMAL);
+    } else if (windowMode == WindowMode::Normal) {
+      SetWindowLong(m_hwnd, GWL_STYLE, m_windowStyle);
+
+      SetWindowPos(m_hwnd, HWND_NOTOPMOST, m_windowRect.left, m_windowRect.top, m_windowRect.right - m_windowRect.left,
+                   m_windowRect.bottom - m_windowRect.top, SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+      ShowWindow(m_hwnd, SW_NORMAL);
+    }
+
+    m_windowMode = windowMode;
+  }
 }
 
 LRESULT CALLBACK Win32Application::WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {

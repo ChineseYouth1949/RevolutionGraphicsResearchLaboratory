@@ -12,23 +12,6 @@ void HelloTexture::OnInit() {
   LoadPipeline();
 }
 
-void HelloTexture::OnUpdate() {}
-void HelloTexture::OnRender() {
-  PopulateCommandList();
-
-  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
-  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
-
-  ThrowIfFailed(m_swapChain->Present(1, 0));
-
-  WaitForPreviousFrame();
-}
-
-void HelloTexture::OnDestroy() {
-  WaitForPreviousFrame();
-  CloseHandle(m_fenceEvent);
-}
-
 void HelloTexture::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
@@ -317,6 +300,31 @@ std::vector<UINT8> HelloTexture::GenerateTextureData() {
   return data;
 }
 
+void HelloTexture::WaitForPreviousFrame() {
+  const UINT fence = m_fenceValue;
+  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
+  m_fenceValue++;
+
+  if (m_fence->GetCompletedValue() < fence) {
+    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
+    WaitForSingleObject(m_fenceEvent, INFINITE);
+  }
+
+  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+void HelloTexture::OnUpdate() {}
+void HelloTexture::OnRender() {
+  PopulateCommandList();
+
+  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
+  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+
+  ThrowIfFailed(m_swapChain->Present(1, 0));
+
+  WaitForPreviousFrame();
+}
+
 void HelloTexture::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator->Reset());
 
@@ -349,15 +357,7 @@ void HelloTexture::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void HelloTexture::WaitForPreviousFrame() {
-  const UINT fence = m_fenceValue;
-  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
-  m_fenceValue++;
-
-  if (m_fence->GetCompletedValue() < fence) {
-    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
-    WaitForSingleObject(m_fenceEvent, INFINITE);
-  }
-
-  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+void HelloTexture::OnDestroy() {
+  WaitForPreviousFrame();
+  CloseHandle(m_fenceEvent);
 }

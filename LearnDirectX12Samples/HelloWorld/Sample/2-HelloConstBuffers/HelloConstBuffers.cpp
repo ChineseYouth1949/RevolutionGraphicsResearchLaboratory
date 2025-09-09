@@ -14,34 +14,6 @@ void HelloConstBuffers::OnInit() {
   LoadPipeline();
 }
 
-void HelloConstBuffers::OnUpdate() {
-  const float translationSpeed = 0.005f;
-  const float offsetBounds = 1.25f;
-
-  m_constantBufferData.offset.x += translationSpeed;
-  if (m_constantBufferData.offset.x > offsetBounds) {
-    m_constantBufferData.offset.x = -offsetBounds;
-  }
-
-  memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-}
-
-void HelloConstBuffers::OnRender() {
-  PopulateCommandList();
-
-  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
-  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
-
-  ThrowIfFailed(m_swapChain->Present(1, 0));
-
-  WaitForPreviousFrame();
-}
-
-void HelloConstBuffers::OnDestroy() {
-  WaitForPreviousFrame();
-  CloseHandle(m_fenceEvent);
-}
-
 void HelloConstBuffers::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
@@ -249,6 +221,42 @@ void HelloConstBuffers::CreateConstantBuffer() {
   memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 }
 
+void HelloConstBuffers::WaitForPreviousFrame() {
+  const UINT fence = m_fenceValue;
+  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
+  m_fenceValue++;
+
+  if (m_fence->GetCompletedValue() < fence) {
+    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
+    WaitForSingleObject(m_fenceEvent, INFINITE);
+  }
+
+  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+void HelloConstBuffers::OnUpdate() {
+  const float translationSpeed = 0.005f;
+  const float offsetBounds = 1.25f;
+
+  m_constantBufferData.offset.x += translationSpeed;
+  if (m_constantBufferData.offset.x > offsetBounds) {
+    m_constantBufferData.offset.x = -offsetBounds;
+  }
+
+  memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+}
+
+void HelloConstBuffers::OnRender() {
+  PopulateCommandList();
+
+  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
+  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+
+  ThrowIfFailed(m_swapChain->Present(1, 0));
+
+  WaitForPreviousFrame();
+}
+
 void HelloConstBuffers::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator->Reset());
 
@@ -281,15 +289,7 @@ void HelloConstBuffers::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void HelloConstBuffers::WaitForPreviousFrame() {
-  const UINT fence = m_fenceValue;
-  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
-  m_fenceValue++;
-
-  if (m_fence->GetCompletedValue() < fence) {
-    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
-    WaitForSingleObject(m_fenceEvent, INFINITE);
-  }
-
-  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+void HelloConstBuffers::OnDestroy() {
+  WaitForPreviousFrame();
+  CloseHandle(m_fenceEvent);
 }

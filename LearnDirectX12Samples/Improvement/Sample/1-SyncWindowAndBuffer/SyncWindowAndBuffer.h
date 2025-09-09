@@ -10,9 +10,9 @@ using namespace DirectX;
 // This example synchronizes the buffer and window sizes only when Q is pressed,
 // but in practice they should be synchronized in real time in WM_SIZE.
 
-class SyncSwapChainAndWindow : public DXSample {
+class SyncWindowAndBuffer : public DXSample {
  public:
-  SyncSwapChainAndWindow(UINT width, UINT height, std::wstring name);
+  SyncWindowAndBuffer(UINT width, UINT height, std::wstring name);
 
   void OnInit() override;
   void OnUpdate() override;

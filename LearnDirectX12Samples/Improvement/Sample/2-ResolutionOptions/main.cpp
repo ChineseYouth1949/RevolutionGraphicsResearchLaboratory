@@ -1,6 +1,6 @@
-#include "SyncSwapChainAndWindow.h"
+#include "ResolutionOptions.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
-  SyncSwapChainAndWindow sample(800, 600, L"SyncSwapChainAndWindow");
+  ResolutionOptions sample(800, 600, L"ResolutionOptions");
   return Win32Application::Run(&sample, hInstance, nCmdShow);
 }

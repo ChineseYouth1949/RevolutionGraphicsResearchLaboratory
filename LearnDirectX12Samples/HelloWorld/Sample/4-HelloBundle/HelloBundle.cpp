@@ -12,23 +12,6 @@ void HelloBundle::OnInit() {
   LoadPipeline();
 }
 
-void HelloBundle::OnUpdate() {}
-void HelloBundle::OnRender() {
-  PopulateCommandList();
-
-  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
-  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
-
-  ThrowIfFailed(m_swapChain->Present(1, 0));
-
-  WaitForPreviousFrame();
-}
-
-void HelloBundle::OnDestroy() {
-  WaitForPreviousFrame();
-  CloseHandle(m_fenceEvent);
-}
-
 void HelloBundle::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
@@ -206,6 +189,31 @@ void HelloBundle::CreateBundle() {
   ThrowIfFailed(m_bundleCommandList->Close());
 }
 
+void HelloBundle::WaitForPreviousFrame() {
+  const UINT fence = m_fenceValue;
+  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
+  m_fenceValue++;
+
+  if (m_fence->GetCompletedValue() < fence) {
+    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
+    WaitForSingleObject(m_fenceEvent, INFINITE);
+  }
+
+  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+void HelloBundle::OnUpdate() {}
+void HelloBundle::OnRender() {
+  PopulateCommandList();
+
+  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
+  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+
+  ThrowIfFailed(m_swapChain->Present(1, 0));
+
+  WaitForPreviousFrame();
+}
+
 void HelloBundle::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator->Reset());
 
@@ -232,15 +240,7 @@ void HelloBundle::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void HelloBundle::WaitForPreviousFrame() {
-  const UINT fence = m_fenceValue;
-  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
-  m_fenceValue++;
-
-  if (m_fence->GetCompletedValue() < fence) {
-    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
-    WaitForSingleObject(m_fenceEvent, INFINITE);
-  }
-
-  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+void HelloBundle::OnDestroy() {
+  WaitForPreviousFrame();
+  CloseHandle(m_fenceEvent);
 }

@@ -12,23 +12,6 @@ void HelloTriangle::OnInit() {
   LoadPipeline();
 }
 
-void HelloTriangle::OnUpdate() {}
-void HelloTriangle::OnRender() {
-  PopulateCommandList();
-
-  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
-  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
-
-  ThrowIfFailed(m_swapChain->Present(1, 0));
-
-  WaitForPreviousFrame();
-}
-
-void HelloTriangle::OnDestroy() {
-  WaitForPreviousFrame();
-  CloseHandle(m_fenceEvent);
-}
-
 void HelloTriangle::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
@@ -193,6 +176,31 @@ void HelloTriangle::CreateVertexBuffer() {
   m_vertexBufferView.SizeInBytes = vertexBufferSize;
 }
 
+void HelloTriangle::WaitForPreviousFrame() {
+  const UINT fence = m_fenceValue;
+  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
+  m_fenceValue++;
+
+  if (m_fence->GetCompletedValue() < fence) {
+    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
+    WaitForSingleObject(m_fenceEvent, INFINITE);
+  }
+
+  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+void HelloTriangle::OnUpdate() {}
+void HelloTriangle::OnRender() {
+  PopulateCommandList();
+
+  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
+  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+
+  ThrowIfFailed(m_swapChain->Present(1, 0));
+
+  WaitForPreviousFrame();
+}
+
 void HelloTriangle::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator->Reset());
 
@@ -220,15 +228,7 @@ void HelloTriangle::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void HelloTriangle::WaitForPreviousFrame() {
-  const UINT fence = m_fenceValue;
-  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
-  m_fenceValue++;
-
-  if (m_fence->GetCompletedValue() < fence) {
-    ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
-    WaitForSingleObject(m_fenceEvent, INFINITE);
-  }
-
-  m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+void HelloTriangle::OnDestroy() {
+  WaitForPreviousFrame();
+  CloseHandle(m_fenceEvent);
 }

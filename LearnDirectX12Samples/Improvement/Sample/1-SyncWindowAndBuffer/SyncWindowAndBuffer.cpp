@@ -1,38 +1,23 @@
-#include "SupportResolutionOptions.h"
+#include "SyncWindowAndBuffer.h"
 
-SupportResolutionOptions::SupportResolutionOptions(UINT width, UINT height, std::wstring name)
+SyncWindowAndBuffer::SyncWindowAndBuffer(UINT width, UINT height, std::wstring name)
     : DXSample(width, height, name),
       m_frameIndex(0),
       m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
       m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
       m_fenceValues{},
-      m_rtvDescriptorSize(0) {}
+      m_rtvDescriptorSize(0) {
+  ThrowIfFailed(DXGIDeclareAdapterRemovalSupport());
+}
 
-void SupportResolutionOptions::OnInit() {
+void SyncWindowAndBuffer::OnInit() {
   SetCustomWindowText(L"Stretch to enlarge the window and press Q to adjust the swap chain size to the window");
 
   LoadCoreInterface();
   LoadPipeline();
 }
 
-void SupportResolutionOptions::OnUpdate() {}
-void SupportResolutionOptions::OnRender() {
-  PopulateCommandList();
-
-  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
-  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
-
-  ThrowIfFailed(m_swapChain->Present(1, 0));
-
-  MoveToNextFrame();
-}
-
-void SupportResolutionOptions::OnDestroy() {
-  WaitForGpu();
-  CloseHandle(m_fenceEvent);
-}
-
-void SupportResolutionOptions::LoadCoreInterface() {
+void SyncWindowAndBuffer::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
 #if defined(_DEBUG)
@@ -123,7 +108,7 @@ void SupportResolutionOptions::LoadCoreInterface() {
   }
 }
 
-void SupportResolutionOptions::LoadPipeline() {
+void SyncWindowAndBuffer::LoadPipeline() {
   CreateRootSignature();
   CreatePSO();
   CreateVertexBuffer();
@@ -131,7 +116,7 @@ void SupportResolutionOptions::LoadPipeline() {
   WaitForGpu();
 }
 
-void SupportResolutionOptions::CreateRootSignature() {
+void SyncWindowAndBuffer::CreateRootSignature() {
   CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
   rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -141,7 +126,7 @@ void SupportResolutionOptions::CreateRootSignature() {
   ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 }
 
-void SupportResolutionOptions::CreatePSO() {
+void SyncWindowAndBuffer::CreatePSO() {
   ComPtr<ID3DBlob> vertexShader;
   ComPtr<ID3DBlob> pixelShader;
 
@@ -177,7 +162,7 @@ void SupportResolutionOptions::CreatePSO() {
   ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
-void SupportResolutionOptions::CreateVertexBuffer() {
+void SyncWindowAndBuffer::CreateVertexBuffer() {
   Vertex triangleVertices[] = {{{0.0f, 0.25f * m_aspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
                                {{0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
                                {{-0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}};
@@ -199,7 +184,28 @@ void SupportResolutionOptions::CreateVertexBuffer() {
   m_vertexBufferView.SizeInBytes = vertexBufferSize;
 }
 
-void SupportResolutionOptions::PopulateCommandList() {
+void SyncWindowAndBuffer::WaitForGpu() {
+  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]));
+
+  ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent));
+  WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+
+  m_fenceValues[m_frameIndex]++;
+}
+
+void SyncWindowAndBuffer::OnUpdate() {}
+void SyncWindowAndBuffer::OnRender() {
+  PopulateCommandList();
+
+  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
+  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+
+  ThrowIfFailed(m_swapChain->Present(1, 0));
+
+  MoveToNextFrame();
+}
+
+void SyncWindowAndBuffer::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator[m_frameIndex]->Reset());
 
   ThrowIfFailed(m_commandList->Reset(m_commandAllocator[m_frameIndex].Get(), m_pipelineState.Get()));
@@ -226,16 +232,7 @@ void SupportResolutionOptions::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void SupportResolutionOptions::WaitForGpu() {
-  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]));
-
-  ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent));
-  WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
-
-  m_fenceValues[m_frameIndex]++;
-}
-
-void SupportResolutionOptions::MoveToNextFrame() {
+void SyncWindowAndBuffer::MoveToNextFrame() {
   const UINT64 currentFenceValue = m_fenceValues[m_frameIndex];
   ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), currentFenceValue));
 
@@ -249,21 +246,21 @@ void SupportResolutionOptions::MoveToNextFrame() {
   m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
-void SupportResolutionOptions::OnSizeChanged(UINT width, UINT height, bool minimized) {
+void SyncWindowAndBuffer::OnSizeChanged(UINT width, UINT height, bool minimized) {
   if (!minimized) {
     m_width = width;
     m_height = height;
   }
 }
 
-void SupportResolutionOptions::OnKeyDown(UINT8 key) {
-  // Q
-  if (key == 0x51) {
+void SyncWindowAndBuffer::OnKeyDown(UINT8 key) {
+  // Q event
+  if (key == UINT8('Q')) {
     ResizeSwapChainToWindow(m_width, m_height);
   }
 }
 
-void SupportResolutionOptions::ResizeSwapChainToWindow(UINT width, UINT height) {
+void SyncWindowAndBuffer::ResizeSwapChainToWindow(UINT width, UINT height) {
   WaitForGpu();
 
   for (size_t i = 0; i < FrameCount; i++) {
@@ -290,4 +287,9 @@ void SupportResolutionOptions::ResizeSwapChainToWindow(UINT width, UINT height) 
     m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
     rtvHandle.Offset(1, m_rtvDescriptorSize);
   }
+}
+
+void SyncWindowAndBuffer::OnDestroy() {
+  WaitForGpu();
+  CloseHandle(m_fenceEvent);
 }

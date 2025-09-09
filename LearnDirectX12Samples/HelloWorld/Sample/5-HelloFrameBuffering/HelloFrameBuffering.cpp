@@ -13,23 +13,6 @@ void HelloFrameBuffering::OnInit() {
   LoadPipeline();
 }
 
-void HelloFrameBuffering::OnUpdate() {}
-void HelloFrameBuffering::OnRender() {
-  PopulateCommandList();
-
-  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
-  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
-
-  ThrowIfFailed(m_swapChain->Present(1, 0));
-
-  MoveToNextFrame();
-}
-
-void HelloFrameBuffering::OnDestroy() {
-  WaitForGpu();
-  CloseHandle(m_fenceEvent);
-}
-
 void HelloFrameBuffering::LoadCoreInterface() {
   UINT dxgiFactoryFlags = 0;
 
@@ -196,6 +179,27 @@ void HelloFrameBuffering::CreateVertexBuffer() {
   m_vertexBufferView.SizeInBytes = vertexBufferSize;
 }
 
+void HelloFrameBuffering::WaitForGpu() {
+  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]));
+
+  ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent));
+  WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+
+  m_fenceValues[m_frameIndex]++;
+}
+
+void HelloFrameBuffering::OnUpdate() {}
+void HelloFrameBuffering::OnRender() {
+  PopulateCommandList();
+
+  ID3D12CommandList* ppCommandList[] = {m_commandList.Get()};
+  m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+
+  ThrowIfFailed(m_swapChain->Present(1, 0));
+
+  MoveToNextFrame();
+}
+
 void HelloFrameBuffering::PopulateCommandList() {
   ThrowIfFailed(m_commandAllocator[m_frameIndex]->Reset());
 
@@ -223,15 +227,6 @@ void HelloFrameBuffering::PopulateCommandList() {
   ThrowIfFailed(m_commandList->Close());
 }
 
-void HelloFrameBuffering::WaitForGpu() {
-  ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]));
-
-  ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent));
-  WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
-
-  m_fenceValues[m_frameIndex]++;
-}
-
 void HelloFrameBuffering::MoveToNextFrame() {
   const UINT64 currentFenceValue = m_fenceValues[m_frameIndex];
   ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), currentFenceValue));
@@ -244,4 +239,9 @@ void HelloFrameBuffering::MoveToNextFrame() {
   }
 
   m_fenceValues[m_frameIndex] = currentFenceValue + 1;
+}
+
+void HelloFrameBuffering::OnDestroy() {
+  WaitForGpu();
+  CloseHandle(m_fenceEvent);
 }
