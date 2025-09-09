@@ -65,17 +65,13 @@ void Win32Application::SetWindowMode(WindowMode windowMode) {
 
     } else if (windowMode == WindowMode::Borderless) {
       SetWindowLong(m_hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
-
       SetWindowPos(m_hwnd, HWND_NOTOPMOST, m_windowRect.left, m_windowRect.top, m_windowRect.right - m_windowRect.left,
                    m_windowRect.bottom - m_windowRect.top, SWP_FRAMECHANGED | SWP_NOACTIVATE);
-
       ShowWindow(m_hwnd, SW_NORMAL);
     } else if (windowMode == WindowMode::Normal) {
       SetWindowLong(m_hwnd, GWL_STYLE, m_windowStyle);
-
       SetWindowPos(m_hwnd, HWND_NOTOPMOST, m_windowRect.left, m_windowRect.top, m_windowRect.right - m_windowRect.left,
                    m_windowRect.bottom - m_windowRect.top, SWP_FRAMECHANGED | SWP_NOACTIVATE);
-
       ShowWindow(m_hwnd, SW_NORMAL);
     }
 

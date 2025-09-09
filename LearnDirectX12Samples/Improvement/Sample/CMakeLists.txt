@@ -1,2 +1,2 @@
 add_subdirectory(1-SyncWindowAndBuffer)
-# add_subdirectory(2-ResolutionOptions)
+add_subdirectory(2-ResolutionOptions)

@@ -87,7 +87,6 @@ class ResolutionOptions : public DXSample {
   UINT64 m_fenceValues[FrameCount];
 
   bool m_windowVisible;
-  WindowMode m_windowedMode;
 
   void LoadCoreInterface();
   void LoadPipeline();

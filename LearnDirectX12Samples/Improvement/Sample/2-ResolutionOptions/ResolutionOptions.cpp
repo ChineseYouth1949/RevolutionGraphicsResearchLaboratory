@@ -17,7 +17,6 @@ ResolutionOptions::ResolutionOptions(UINT width, UINT height, std::wstring name)
       m_rtvDescriptorSize(0),
       m_cbvSrvDescriptorSize(0),
       m_windowVisible(true),
-      m_windowedMode(WindowMode::Normal),
       m_fenceValues{} {
   m_resolutionOptions = {{800u, 600u}, {1200u, 900u}, {1280u, 720u}, {1920u, 1080u}, {1920u, 1200u}, {2560u, 1440u}, {3440u, 1440u}, {3840u, 2160u}};
   m_resolutionIndex = 2;
@@ -707,12 +706,6 @@ void ResolutionOptions::OnSizeChanged(UINT width, UINT height, bool minimized) {
     m_swapChain->GetDesc(&desc);
     ThrowIfFailed(m_swapChain->ResizeBuffers(FrameCount, width, height, desc.BufferDesc.Format, desc.Flags));
 
-    BOOL fullscreenState;
-    ThrowIfFailed(m_swapChain->GetFullscreenState(&fullscreenState, nullptr));
-    if (fullscreenState) {
-      m_windowedMode = WindowMode::FullScreen;
-    }
-
     // Reset the frame index to the current back buffer index.
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
@@ -758,59 +751,9 @@ void ResolutionOptions::OnKeyDown(UINT8 key) {
 
   // W
   if (key == UINT('W')) {
-    if (m_windowedMode == WindowMode::FullScreen) {
-      SetWindowPlacement(Win32Application::GetHwnd(), &prevPlacement);
-    }
-
-    m_windowedMode = WindowMode((uint8_t(m_windowedMode) + 1) % uint8_t(WindowMode::Num));
-
-    if (m_windowedMode == WindowMode::FullScreen) {
-      GetWindowPlacement(Win32Application::GetHwnd(), &prevPlacement);
-
-      RECT m_windowRect;
-
-      // Save the old window rect so we can restore it when exiting fullscreen mode.
-      GetWindowRect(m_hwnd, &m_windowRect);
-
-      // Make the window borderless so that the client area can fill the screen.
-      SetWindowLong(m_hwnd, GWL_STYLE, m_windowStyle & ~(WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU | WS_THICKFRAME));
-
-      RECT fullscreenWindowRect;
-      try {
-        if (pSwapChain) {
-          // Get the settings of the display on which the app's window is currently displayed
-          ComPtr<IDXGIOutput> pOutput;
-          ThrowIfFailed(pSwapChain->GetContainingOutput(&pOutput));
-          DXGI_OUTPUT_DESC Desc;
-          ThrowIfFailed(pOutput->GetDesc(&Desc));
-          fullscreenWindowRect = Desc.DesktopCoordinates;
-        } else {
-          // Fallback to EnumDisplaySettings implementation
-          throw HrException(S_FALSE);
-        }
-      } catch (HrException& e) {
-        UNREFERENCED_PARAMETER(e);
-
-        // Get the settings of the primary display
-        DEVMODE devMode = {};
-        devMode.dmSize = sizeof(DEVMODE);
-        EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devMode);
-
-        fullscreenWindowRect = {devMode.dmPosition.x, devMode.dmPosition.y, devMode.dmPosition.x + static_cast<LONG>(devMode.dmPelsWidth),
-                                devMode.dmPosition.y + static_cast<LONG>(devMode.dmPelsHeight)};
-      }
-
-      SetWindowPos(m_hwnd, HWND_TOPMOST, fullscreenWindowRect.left, fullscreenWindowRect.top, fullscreenWindowRect.right, fullscreenWindowRect.bottom,
-                   SWP_FRAMECHANGED | SWP_NOACTIVATE);
-
-      ShowWindow(m_hwnd, SW_MAXIMIZE);
-    } else if (m_windowedMode == WindowMode::Borderless) {
-      SetWindowLongPtr(Win32Application::GetHwnd(), GWL_STYLE, WS_POPUP | WS_VISIBLE);
-      SetWindowPos(Win32Application::GetHwnd(), nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-    } else if (m_windowedMode == WindowMode::Normal) {
-      SetWindowLongPtr(Win32Application::GetHwnd(), GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-      SetWindowPos(Win32Application::GetHwnd(), nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-    }
+    auto currentWindowMode = Win32Application::GetWindowMode();
+    auto nextWindowMode = WindowMode((uint8_t(currentWindowMode) + 1) % uint8_t(WindowMode::Num));
+    Win32Application::SetWindowMode(nextWindowMode);
   }
 }
 
