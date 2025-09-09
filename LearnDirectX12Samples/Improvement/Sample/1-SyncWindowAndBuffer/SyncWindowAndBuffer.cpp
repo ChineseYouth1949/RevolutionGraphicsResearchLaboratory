@@ -11,7 +11,7 @@ SyncWindowAndBuffer::SyncWindowAndBuffer(UINT width, UINT height, std::wstring n
 }
 
 void SyncWindowAndBuffer::OnInit() {
-  SetCustomWindowText(L"Stretch to enlarge the window and press Q to adjust the swap chain size to the window");
+  SetCustomWindowText(L"Stretch to enlarge the window and press SPACE to adjust the swap chain size to the window");
 
   LoadCoreInterface();
   LoadPipeline();
@@ -254,8 +254,8 @@ void SyncWindowAndBuffer::OnSizeChanged(UINT width, UINT height, bool minimized)
 }
 
 void SyncWindowAndBuffer::OnKeyDown(UINT8 key) {
-  // Q event
-  if (key == UINT8('Q')) {
+  // SPACE event
+  if (key == VK_SPACE) {
     ResizeSwapChainToWindow(m_width, m_height);
   }
 }

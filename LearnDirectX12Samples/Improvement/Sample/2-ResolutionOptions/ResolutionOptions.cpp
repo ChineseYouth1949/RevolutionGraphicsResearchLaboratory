@@ -758,7 +758,7 @@ void ResolutionOptions::OnKeyDown(UINT8 key) {
   static WINDOWPLACEMENT prevPlacement = {sizeof(WINDOWPLACEMENT)};
 
   // W
-  if (key == UINT('W')) {
+  if (key == VK_SPACE) {
     auto currentWindowMode = Win32Application::GetWindowMode();
     auto nextWindowMode = WindowMode((uint8_t(currentWindowMode) + 1) % uint8_t(WindowMode::Num));
     Win32Application::SetWindowMode(nextWindowMode, m_swapChain.Get());
