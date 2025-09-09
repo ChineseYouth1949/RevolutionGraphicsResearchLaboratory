@@ -94,7 +94,6 @@ void Win32Application::SetWindowMode(WindowMode windowMode, IDXGISwapChain* pSwa
                    SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
       ShowWindow(m_hwnd, SW_MAXIMIZE);
-
     } else if (windowMode == WindowMode::Borderless) {
       SetWindowLong(m_hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
       SetWindowPos(m_hwnd, HWND_NOTOPMOST, m_windowRect.left, m_windowRect.top, m_windowRect.right - m_windowRect.left,
