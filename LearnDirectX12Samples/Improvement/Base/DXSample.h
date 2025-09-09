@@ -37,12 +37,17 @@ class DXSample {
   std::wstring GetAssetFullPath(std::wstring assetName);
   void SetCustomWindowText(std::wstring text);
   void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter = false);
+
   RECT GetWindowBounds() const;
+  bool GetTearingSupport() const { return m_tearingSupport; }
+  void CheckTearingSupport();
 
   UINT m_width;
   UINT m_height;
   float m_aspectRatio;
   bool m_useWarpDevice;
+
+  bool m_tearingSupport;
 
  private:
   std::wstring m_assetsPath;

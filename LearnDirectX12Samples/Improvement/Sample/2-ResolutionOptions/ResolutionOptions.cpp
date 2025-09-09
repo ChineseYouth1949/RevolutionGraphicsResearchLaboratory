@@ -1,5 +1,7 @@
 #include "ResolutionOptions.h"
 
+#include <iostream>
+
 const float ResolutionOptions::QuadWidth = 20.0f;
 const float ResolutionOptions::QuadHeight = 720.0f;
 const float ResolutionOptions::LetterboxColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -79,6 +81,8 @@ void ResolutionOptions::LoadCoreInterface() {
   swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
   swapChainDesc.SampleDesc.Count = 1;
   swapChainDesc.Scaling = DXGI_SCALING_NONE;
+
+  swapChainDesc.Flags = m_tearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
   ComPtr<IDXGISwapChain1> swapChain;
   ThrowIfFailed(factory->CreateSwapChainForHwnd(m_commandQueue.Get(), Win32Application::GetHwnd(), &swapChainDesc, nullptr, nullptr, &swapChain));
@@ -527,6 +531,8 @@ void ResolutionOptions::OnUpdate() {
     m_sceneConstantBufferData.offset.x = -offsetBounds;
   }
 
+  std::cout << "m_sceneConstantBufferData.offset.x : " << m_sceneConstantBufferData.offset.x << std::endl;
+
   // Orthogonal projection x displacement transformation matrix
   XMMATRIX transform = XMMatrixMultiply(XMMatrixOrthographicLH(static_cast<float>(m_resolutionOptions[m_resolutionIndex].width),
                                                                static_cast<float>(m_resolutionOptions[m_resolutionIndex].height), 0.0f, 100.0f),
@@ -549,8 +555,10 @@ void ResolutionOptions::OnRender() {
       ID3D12CommandList* ppCommandLists[] = {m_sceneCommandList.Get(), m_postCommandList.Get()};
       m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
+      UINT presentFlags = (m_tearingSupport && !Win32Application::IsFullScreen()) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+
       // Present the frame.
-      ThrowIfFailed(m_swapChain->Present(1, 0));
+      ThrowIfFailed(m_swapChain->Present(0, presentFlags));
 
       MoveToNextFrame();
     } catch (HrException& e) {
@@ -753,7 +761,7 @@ void ResolutionOptions::OnKeyDown(UINT8 key) {
   if (key == UINT('W')) {
     auto currentWindowMode = Win32Application::GetWindowMode();
     auto nextWindowMode = WindowMode((uint8_t(currentWindowMode) + 1) % uint8_t(WindowMode::Num));
-    Win32Application::SetWindowMode(nextWindowMode);
+    Win32Application::SetWindowMode(nextWindowMode, m_swapChain.Get());
   }
 }
 

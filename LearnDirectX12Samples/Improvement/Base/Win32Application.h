@@ -12,7 +12,9 @@ class Win32Application {
   static HWND GetHwnd() { return m_hwnd; }
 
   static WindowMode GetWindowMode() { return m_windowMode; }
-  static void SetWindowMode(WindowMode windowMode);
+  static void SetWindowMode(WindowMode windowMode, IDXGISwapChain* pSwapChain);
+
+  static bool IsFullScreen() { return m_windowMode == WindowMode::FullScreen; }
 
  protected:
   static LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

@@ -7,6 +7,8 @@ using namespace Microsoft::WRL;
 DXSample::DXSample(UINT width, UINT height, std::wstring name) : m_width(width), m_height(height), m_title(name), m_useWarpDevice(false) {
   m_assetsPath = GetAppPath();
   m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
+  CheckTearingSupport();
 }
 
 DXSample::~DXSample() {}
@@ -105,4 +107,15 @@ void DXSample::ParseCommandLineArgs(WCHAR* argv[], int argc) {
       m_title = m_title + L" (WARP)";
     }
   }
+}
+
+void DXSample::CheckTearingSupport() {
+  ComPtr<IDXGIFactory6> factory;
+  HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
+  BOOL allowTearing = FALSE;
+  if (SUCCEEDED(hr)) {
+    hr = factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+  }
+
+  m_tearingSupport = SUCCEEDED(hr) && allowTearing;
 }
