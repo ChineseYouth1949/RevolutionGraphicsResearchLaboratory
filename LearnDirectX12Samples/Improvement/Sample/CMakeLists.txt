@@ -1,2 +1,4 @@
 add_subdirectory(1-SyncWindowAndBuffer)
 add_subdirectory(2-ResolutionOptions)
+add_subdirectory(3-PipelineStateCache)
+add_subdirectory(4-DynamicIndexing)

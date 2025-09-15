@@ -19,6 +19,7 @@ ResolutionOptions::ResolutionOptions(UINT width, UINT height, std::wstring name)
       m_rtvDescriptorSize(0),
       m_cbvSrvDescriptorSize(0),
       m_windowVisible(true),
+      m_isFullScreen(false),
       m_fenceValues{} {
   m_resolutionOptions = {{800u, 600u}, {1200u, 900u}, {1280u, 720u}, {1920u, 1080u}, {1920u, 1200u}, {2560u, 1440u}, {3440u, 1440u}, {3840u, 2160u}};
   m_resolutionIndex = 2;
@@ -210,14 +211,14 @@ void ResolutionOptions::LoadPipeline() {
     UINT compileFlags = 0;
 #endif
 
-    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0,
+    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"SceneShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0,
                                      &sceneVertexShader, &error));
-    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0,
+    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"SceneShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0,
                                      &scenePixelShader, &error));
 
-    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"postShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0,
+    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"PostShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0,
                                      &postVertexShader, &error));
-    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"postShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0,
+    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"PostShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0,
                                      &postPixelShader, &error));
 
     // Define the vertex input layouts.
@@ -531,8 +532,6 @@ void ResolutionOptions::OnUpdate() {
     m_sceneConstantBufferData.offset.x = -offsetBounds;
   }
 
-  std::cout << "m_sceneConstantBufferData.offset.x : " << m_sceneConstantBufferData.offset.x << std::endl;
-
   // Orthogonal projection x displacement transformation matrix
   XMMATRIX transform = XMMatrixMultiply(XMMatrixOrthographicLH(static_cast<float>(m_resolutionOptions[m_resolutionIndex].width),
                                                                static_cast<float>(m_resolutionOptions[m_resolutionIndex].height), 0.0f, 100.0f),
@@ -555,7 +554,7 @@ void ResolutionOptions::OnRender() {
       ID3D12CommandList* ppCommandLists[] = {m_sceneCommandList.Get(), m_postCommandList.Get()};
       m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-      UINT presentFlags = (m_tearingSupport && !Win32Application::IsFullScreen()) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+      UINT presentFlags = (m_tearingSupport && !m_isFullScreen) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
       // Present the frame.
       ThrowIfFailed(m_swapChain->Present(0, presentFlags));
@@ -723,6 +722,8 @@ void ResolutionOptions::OnSizeChanged(UINT width, UINT height, bool minimized) {
     m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
     LoadSizeDependentResources();
+
+    m_swapChain->GetFullscreenState(&m_isFullScreen, nullptr);
   }
 
   m_windowVisible = !minimized;

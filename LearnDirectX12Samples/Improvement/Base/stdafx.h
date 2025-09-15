@@ -13,3 +13,8 @@
 #include <shellapi.h>
 #include <wrl.h>
 #include <string>
+
+#include <stdio.h>
+#include <iostream>
+#include <list>
+#include <sstream>

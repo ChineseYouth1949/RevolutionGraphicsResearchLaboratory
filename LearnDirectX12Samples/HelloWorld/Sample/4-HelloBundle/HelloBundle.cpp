@@ -129,10 +129,10 @@ void HelloBundle::CreatePSO() {
   UINT compileFlags = 0;
 #endif
 
-  std::wstring vertexShaderPath = GetAssetFullPath(L"shaders.hlsl");
+  std::wstring vertexShaderPath = GetAssetFullPath(L"HelloBundle.hlsl");
   ThrowIfFailed(D3DCompileFromFile(vertexShaderPath.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
 
-  std::wstring pixelShaderPath = GetAssetFullPath(L"shaders.hlsl");
+  std::wstring pixelShaderPath = GetAssetFullPath(L"HelloBundle.hlsl");
   ThrowIfFailed(D3DCompileFromFile(pixelShaderPath.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
   D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},

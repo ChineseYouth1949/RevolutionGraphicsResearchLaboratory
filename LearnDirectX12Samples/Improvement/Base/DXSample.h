@@ -24,7 +24,7 @@ class DXSample {
 
   virtual void OnDisplayChanged();
   virtual void OnWindowMoved(int x, int y);
-  virtual void OnSizeChanged(UINT width, UINT height, bool minimized) = 0;
+  virtual void OnSizeChanged(UINT width, UINT height, bool minimized);
 
   virtual void ParseCommandLineArgs(WCHAR* argv[], int argc);
 
@@ -41,6 +41,7 @@ class DXSample {
   RECT GetWindowBounds() const;
   bool GetTearingSupport() const { return m_tearingSupport; }
   void CheckTearingSupport();
+  void CheckFullScreen();
 
   UINT m_width;
   UINT m_height;

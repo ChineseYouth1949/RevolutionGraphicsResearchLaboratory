@@ -8,6 +8,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <pix.h>
+
 using Microsoft::WRL::ComPtr;
 
 inline std::string HrToString(HRESULT hr) {

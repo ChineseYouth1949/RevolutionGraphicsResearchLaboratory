@@ -43,7 +43,6 @@ class HelloGenericPrograms : public DXSample {
   UINT64 m_fenceValue;
 
   // Here are the core differences between this example and HelloTriangle.
-
   void LoadCoreInterface();
   void LoadPipeline();
 

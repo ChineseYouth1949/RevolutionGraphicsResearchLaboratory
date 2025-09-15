@@ -22,6 +22,7 @@ void DXSample::OnRightButtonDown(UINT x, UINT y) {}
 void DXSample::OnRightButtonUp(UINT x, UINT y) {}
 void DXSample::OnDisplayChanged() {}
 void DXSample::OnWindowMoved(int x, int y) {}
+void DXSample::OnSizeChanged(UINT width, UINT height, bool minimized) {}
 
 UINT DXSample::GetWidth() const {
   return m_width;

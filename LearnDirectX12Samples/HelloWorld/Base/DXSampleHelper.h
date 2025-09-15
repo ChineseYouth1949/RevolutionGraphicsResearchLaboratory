@@ -63,28 +63,42 @@ inline std::wstring GetAppParentRelativePath(const std::wstring& relaPath) {
 }
 
 inline std::vector<uint8_t> ReadDataFromFile(const std::wstring& fileName) {
-  const std::filesystem::path& filePath(fileName);
+  using namespace Microsoft::WRL;
 
-  if (!std::filesystem::exists(filePath)) {
-    throw std::system_error(ERROR_FILE_NOT_FOUND, std::system_category(), "File not found: " + filePath.string());
+#if WINVER >= _WIN32_WINNT_WIN8
+  CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
+  extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+  extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+  extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
+  extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+  extendedParams.lpSecurityAttributes = nullptr;
+  extendedParams.hTemplateFile = nullptr;
+
+  Wrappers::FileHandle file(CreateFile2(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+#else
+  Wrappers::FileHandle file(CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                                       FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | SECURITY_SQOS_PRESENT | SECURITY_ANONYMOUS, nullptr));
+#endif
+  if (file.Get() == INVALID_HANDLE_VALUE) {
+    throw std::exception();
   }
 
-  const auto file_size = std::filesystem::file_size(filePath);
-  if (file_size > SIZE_MAX) {
-    throw std::runtime_error("File too large");
+  FILE_STANDARD_INFO fileInfo = {};
+  if (!GetFileInformationByHandleEx(file.Get(), FileStandardInfo, &fileInfo, sizeof(fileInfo))) {
+    throw std::exception();
   }
 
-  std::ifstream file(filePath, std::ios::binary);
-  if (!file) {
-    throw std::system_error(errno, std::system_category(), "Failed to open file");
+  if (fileInfo.EndOfFile.HighPart != 0) {
+    throw std::exception();
   }
 
-  std::vector<uint8_t> buffer(file_size);
-  if (!file.read(reinterpret_cast<char*>(buffer.data()), buffer.size())) {
-    throw std::system_error(errno, std::system_category(), "Failed to read file");
+  std::vector<uint8_t> data(fileInfo.EndOfFile.LowPart);
+
+  if (!ReadFile(file.Get(), data.data(), fileInfo.EndOfFile.LowPart, nullptr, nullptr)) {
+    throw std::exception();
   }
 
-  return buffer;
+  return data;
 }
 
 struct DDS_PIXELFORMAT {

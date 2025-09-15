@@ -87,6 +87,7 @@ class ResolutionOptions : public DXSample {
   UINT64 m_fenceValues[FrameCount];
 
   bool m_windowVisible;
+  BOOL m_isFullScreen;
 
   void LoadCoreInterface();
   void LoadPipeline();
