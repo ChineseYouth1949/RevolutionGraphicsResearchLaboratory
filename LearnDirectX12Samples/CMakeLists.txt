@@ -16,3 +16,4 @@ endfunction()
 
 add_subdirectory(HelloWorld)
 add_subdirectory(Improvement)
+add_subdirectory(MiniEngine)
