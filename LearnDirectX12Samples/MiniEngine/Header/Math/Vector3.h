@@ -5,6 +5,9 @@
 
 namespace MiniEngine::Math {
 
-class Vector {};
+class Vector {
+ public:
+ private:
+};
 
 }  // namespace MiniEngine::Math
